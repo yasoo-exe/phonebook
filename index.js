@@ -1,4 +1,6 @@
+require("dotenv").config();
 const express = require("express");
+const Person = require("./models/contact");
 const morgan = require("morgan");
 const cors = require("cors");
 
@@ -20,90 +22,66 @@ app.use(
   )
 );
 
-let persons = [
-  {
-    id: 1,
-    name: "Arto Hellas",
-    number: "040-123456",
-  },
-  {
-    id: 2,
-    name: "Ada Lovelace",
-    number: "39-44-5323523",
-  },
-  {
-    id: 3,
-    name: "Dan Abramov",
-    number: "12-43-234345",
-  },
-  {
-    id: 4,
-    name: "Mary Poppendieck",
-    number: "39-23-6423122",
-  },
-];
-
 //get whole persons
 app.get("/api/persons", (request, response) => {
-  response.json(persons);
+  Person.find({}).then((persons) => {
+    response.json(persons);
+  });
 });
 
 //get length of data at current time
 app.get("/info", (request, response) => {
-  const dataToRetun = `<p>persons contains ${
-    persons.length
-  } people</p> <p>${new Date()}</p>`;
-  response.send(dataToRetun);
+  Person.find({}).then((persons) => {
+    const status = `<p>persons contains ${
+      persons.length
+    } people</p> <p>${new Date()}</p>`;
+    response.send(status);
+  });
 });
 
 //get individual contact
 app.get("/api/persons/:id", (request, response) => {
-  const id = Number(request.params.id);
-  const contact = persons.find((contact) => contact.id === id);
-  contact
-    ? response.json(contact)
-    : response
+  Person.findById(request.params.id)
+    .then((contact) => response.json(contact))
+    .catch((error) => {
+      console.log("\x1b[31m", "there is an error", error);
+      response
         .status(404)
         .send("<h1 style='color: red;'>Contact Not Found</h1>");
+    });
+});
+
+//update individual contact
+app.put("/api/persons/:id", (request, response) => {
+  Person.findByIdAndUpdate(request.params.id, request.body, {
+    new: true,
+  }).then((updatedPerson) => response.json(updatedPerson));
 });
 
 //delete individual contact
 app.delete("/api/persons/:id", (request, response) => {
-  const id = Number(request.params.id);
-  persons = persons.filter((contact) => contact.id !== id);
-  response.status(204).end();
+  Person.findByIdAndDelete(request.params.id).then((returnedContact) =>
+    response.json(returnedContact)
+  );
 });
 
-//add contact
+//add new contact
 app.post("/api/persons", (request, response) => {
   const body = request.body;
 
-  if (!body.name) {
-    return response.status(400).json({
-      error: "name is missing!",
-    });
-  } else if (!body.number) {
-    return response.status(400).json({
-      error: "number is missing!",
-    });
-  } else if (
-    persons.filter((contact) => contact.name === body.name).length > 0
-  ) {
-    return response.status(400).json({
-      error: "the contact already exists",
-    });
-  } else {
-    const contact = {
-      id: Math.floor(Math.random() * 9999999999999),
-      name: body.name,
-      number: body.number,
-    };
-    persons.concat(contact);
-    return response.json(contact);
+  if (!body.name || !body.number) {
+    return response.status(400).json({ error: "content missing!" });
   }
+
+  const person = new Person({
+    name: body.name,
+    number: body.number,
+  });
+
+  person.save().then((person) => response.json(person));
 });
 
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT;
 app.listen(PORT, () => {
   console.log(`server is running at port ${PORT}`);
 });
