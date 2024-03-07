@@ -24,45 +24,48 @@ app.use(
 
 //get whole persons
 app.get("/api/persons", (request, response) => {
-  Person.find({}).then((persons) => {
-    response.json(persons);
-  });
+  Person.find({})
+    .then((persons) => {
+      response.json(persons);
+    })
+    .catch((error) => next(error));
 });
 
 //get length of data at current time
 app.get("/info", (request, response) => {
-  Person.find({}).then((persons) => {
-    const status = `<p>persons contains ${
-      persons.length
-    } people</p> <p>${new Date()}</p>`;
-    response.send(status);
-  });
+  Person.find({})
+    .then((persons) => {
+      const status = `<p>persons contains ${
+        persons.length
+      } people</p> <p>${new Date()}</p>`;
+      response.send(status);
+    })
+    .catch((error) => next(error));
 });
 
 //get individual contact
 app.get("/api/persons/:id", (request, response) => {
   Person.findById(request.params.id)
-    .then((contact) => response.json(contact))
-    .catch((error) => {
-      console.log("\x1b[31m", "there is an error", error);
-      response
-        .status(404)
-        .send("<h1 style='color: red;'>Contact Not Found</h1>");
-    });
+    .then((contact) =>
+      contact ? response.json(contact) : response.status(404).end()
+    )
+    .catch((error) => next(error));
 });
 
 //update individual contact
 app.put("/api/persons/:id", (request, response) => {
   Person.findByIdAndUpdate(request.params.id, request.body, {
     new: true,
-  }).then((updatedPerson) => response.json(updatedPerson));
+  })
+    .then((updatedPerson) => response.json(updatedPerson))
+    .catch((error) => next(error));
 });
 
 //delete individual contact
 app.delete("/api/persons/:id", (request, response) => {
-  Person.findByIdAndDelete(request.params.id).then((returnedContact) =>
-    response.json(returnedContact)
-  );
+  Person.findByIdAndDelete(request.params.id)
+    .then((returnedContact) => response.json(returnedContact))
+    .catch((error) => next(error));
 });
 
 //add new contact
@@ -78,8 +81,21 @@ app.post("/api/persons", (request, response) => {
     number: body.number,
   });
 
-  person.save().then((person) => response.json(person));
+  person
+    .save()
+    .then((person) => response.json(person))
+    .catch((error) => next(error));
 });
+
+//errorHandler
+const errorHandler = (error, request, response, next) => {
+  console.log(error.message);
+  return error.name === "CastError"
+    ? response.status(400).send({ error: "malformatted id" })
+    : next(error);
+};
+
+app.use(errorHandler);
 
 const PORT = process.env.PORT;
 app.listen(PORT, () => {
