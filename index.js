@@ -11,7 +11,7 @@ app.use(cors());
 app.use(express.json());
 
 morgan.token("req-body", (req) => {
-  return req.method === "POST" && req.body ? JSON.stringify(req.body) : null;
+  return req.body ? JSON.stringify(req.body) : null;
 });
 
 // Use morgan middleware with the tiny format and the custom token for printing the body of the POST request
@@ -56,6 +56,8 @@ app.get("/api/persons/:id", (request, response, next) => {
 app.put("/api/persons/:id", (request, response, next) => {
   Person.findByIdAndUpdate(request.params.id, request.body, {
     new: true,
+    runValidators: true,
+    context: "query",
   })
     .then((updatedPerson) => response.json(updatedPerson))
     .catch((error) => next(error));
@@ -89,9 +91,15 @@ app.post("/api/persons", (request, response, next) => {
 
 //errorHandler
 const errorHandler = (error, request, response, next) => {
-  return error.name === "CastError"
-    ? response.status(400).send({ error: "malformatted id" })
-    : console.log(error);
+  console.error(error.message);
+
+  if (error.name === "CastError") {
+    return response.status(400).send({ error: "malformatted id" });
+  } else if (error.name === "ValidationError") {
+    return response.status(400).json({ error: error.message });
+  }
+
+  next(error);
 };
 
 app.use(errorHandler);
