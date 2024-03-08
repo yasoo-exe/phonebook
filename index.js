@@ -23,7 +23,7 @@ app.use(
 );
 
 //get whole persons
-app.get("/api/persons", (request, response) => {
+app.get("/api/persons", (request, response, next) => {
   Person.find({})
     .then((persons) => {
       response.json(persons);
@@ -32,7 +32,7 @@ app.get("/api/persons", (request, response) => {
 });
 
 //get length of data at current time
-app.get("/info", (request, response) => {
+app.get("/info", (request, response, next) => {
   Person.find({})
     .then((persons) => {
       const status = `<p>persons contains ${
@@ -44,7 +44,7 @@ app.get("/info", (request, response) => {
 });
 
 //get individual contact
-app.get("/api/persons/:id", (request, response) => {
+app.get("/api/persons/:id", (request, response, next) => {
   Person.findById(request.params.id)
     .then((contact) =>
       contact ? response.json(contact) : response.status(404).end()
@@ -53,7 +53,7 @@ app.get("/api/persons/:id", (request, response) => {
 });
 
 //update individual contact
-app.put("/api/persons/:id", (request, response) => {
+app.put("/api/persons/:id", (request, response, next) => {
   Person.findByIdAndUpdate(request.params.id, request.body, {
     new: true,
   })
@@ -62,14 +62,14 @@ app.put("/api/persons/:id", (request, response) => {
 });
 
 //delete individual contact
-app.delete("/api/persons/:id", (request, response) => {
+app.delete("/api/persons/:id", (request, response, next) => {
   Person.findByIdAndDelete(request.params.id)
     .then((returnedContact) => response.json(returnedContact))
     .catch((error) => next(error));
 });
 
 //add new contact
-app.post("/api/persons", (request, response) => {
+app.post("/api/persons", (request, response, next) => {
   const body = request.body;
 
   if (!body.name || !body.number) {
@@ -89,10 +89,9 @@ app.post("/api/persons", (request, response) => {
 
 //errorHandler
 const errorHandler = (error, request, response, next) => {
-  console.log(error.message);
   return error.name === "CastError"
     ? response.status(400).send({ error: "malformatted id" })
-    : next(error);
+    : console.log(error);
 };
 
 app.use(errorHandler);
