@@ -8,7 +8,9 @@
     "start": "node index.js",
     "dev": "nodemon index.js",
     "build:ui": "rm -rf dist && cd ../fullStackOpen/part2/phonebook && npm run build && cp -r dist ../../../phonebook",
-    "deploy:full": "npm run build:ui && git add . && git commit -m uibuild && git push origin main"
+    "deploy:full": "npm run build:ui && git add . && git commit -m uibuild && git push origin main",
+    "lint": "eslint . --ext .js",
+    "lintfix": "eslint  *.js --fix"
   },
   "author": "",
   "license": "ISC",
@@ -19,5 +21,8 @@
     "mongoose": "^8.2.1",
     "morgan": "^1.10.0",
     "nodemon": "^3.0.3"
+  },
+  "devDependencies": {
+    "eslint": "^8.57.0"
   }
 }
