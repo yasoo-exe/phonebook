@@ -15,10 +15,20 @@ mongoose
   .catch((error) => {
     console.log(`error connecting to mongodb: ${error}`);
   });
+const numberValidator = (number) => {
+  return /(^\d{2,3})(-{1})(\d+$)/.test(number) && number.length > 7;
+};
 
 const personSchema = new mongoose.Schema({
   name: { type: String, minLength: 3 },
-  number: Number,
+  number: {
+    type: String,
+    minLength: 8,
+    validate: [
+      numberValidator,
+      "phone number must be at least 8 digits long and in the correct format i.e 92-321999 or 932-98765",
+    ],
+  },
 });
 
 personSchema.set("toJSON", {
